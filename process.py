@@ -1,8 +1,16 @@
-import re
 import os
+import re
 from collections import defaultdict
+import pymorphy2
 
 PAGES_DIR = "pages"
+TOKENS_DIR = "tokens"
+LEMMAS_DIR = "lemmas"
+
+os.makedirs(TOKENS_DIR, exist_ok=True)
+os.makedirs(LEMMAS_DIR, exist_ok=True)
+
+morph = pymorphy2.MorphAnalyzer()
 
 STOP_WORDS = {
     'и', 'в', 'во', 'не', 'что', 'он', 'на', 'я', 'с', 'со', 'как', 'а', 'то', 'все', 'она', 'так', 'его', 'но', 'да', 'ты', 'к', 'у', 'же', 'вы', 'за', 'бы', 'по', 'только', 'ее', 'мне', 'было', 'вот', 'от', 'меня', 'еще', 'нет', 'о', 'из', 'ему', 'теперь', 'когда', 'даже', 'ну', 'вдруг', 'ли', 'если', 'уже', 'или', 'ни', 'быть', 'был', 'него', 'до', 'вас', 'нибудь', 'опять', 'уж', 'вам', 'ведь', 'там', 'потом', 'себя', 'ничто', 'ей', 'может', 'они', 'тут', 'где', 'есть', 'надо', 'ней', 'для', 'мы', 'тебя', 'их', 'чем', 'была', 'сам', 'чтоб', 'без', 'будто', 'чего', 'раз', 'тоже', 'себе', 'под', 'будет', 'ж', 'тогда', 'кто', 'этот', 'того', 'потому', 'этого', 'какой', 'совсем', 'ним', 'здесь', 'этом', 'один', 'почти', 'мой', 'тем', 'чтобы', 'нее', 'сейчас', 'были', 'куда', 'зачем', 'всех', 'никогда', 'можно', 'при', 'наконец', 'два', 'об', 'другой', 'хоть', 'после', 'над', 'больше', 'тот', 'через', 'эти', 'нас', 'про', 'всего', 'них', 'какая', 'много', 'разве', 'три', 'эту', 'моя', 'впрочем', 'хорошо', 'свою', 'этой', 'перед', 'иногда', 'лучше', 'чуть', 'том', 'нельзя', 'такой', 'им', 'более', 'всегда', 'конечно', 'всю', 'между',
@@ -10,92 +18,66 @@ STOP_WORDS = {
     'amp', 'nbsp', 'hellip', 'ndash', 'mdash', 'laquo', 'raquo', 'quot', 'apos', 'lt', 'gt', 'http', 'https', 'www', 'com', 'ru', 'org', 'net', 'io', 'co', 'tv'
 }
 
-def simple_russian_stem(word):
-    endings = [
-        'ами', 'ах', 'ов', 'ам', 'у', 'а', 'я', 'е', 'ы', 'о', 'ем', 'ей', 'ию', 'ии', 'ие', 'ия',
-        'ому', 'ого', 'ый', 'ая', 'ое', 'ые', 'ой', 'им', 'ом', 'ев', 'ью', 'ание', 'ение', 'ием',
-        'иями', 'ями', 'ски', 'ский', 'ская', 'ское', 'ских', 'ского'
-    ]
-    for end in sorted(endings, key=len, reverse=True):
-        if word.endswith(end):
-            return word[:-len(end)]
-    return word
+def clean_html(html):
+    html = re.sub(r'<script.*?</script>|<style.*?</style>|<!--.*?-->', '', html, flags=re.DOTALL | re.I)
+    text = re.sub(r'<[^>]+>', ' ', html)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
 
-all_text = ""
+all_tokens = set()
+global_lemma_groups = defaultdict(set)
+
+
 for filename in sorted(os.listdir(PAGES_DIR)):
     if not filename.endswith(".html"):
         continue
+
+    page_id = filename.replace(".html", "")
     path = os.path.join(PAGES_DIR, filename)
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            html = f.read()
-        text = re.sub(r'<script.*?</script>|<style.*?</style>|<!--.*?-->', '', html, flags=re.DOTALL | re.I)
-        text = re.sub(r'<[^>]+>', ' ', text)
-        entities = {
-            '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'",
-            '&nbsp;': ' ', '&hellip;': '...', '&ndash;': '-', '&mdash;': '—',
-            '&laquo;': '«', '&raquo;': '»'
-        }
-        for ent, repl in entities.items():
-            text = text.replace(ent, repl)
-        text = re.sub(r'\s+', ' ', text).strip()
-        all_text += " " + text
-    except Exception as e:
-        print(f"Ошибка {filename}: {e}")
+
+    with open(path, 'r', encoding='utf-8') as f:
+        html = f.read()
+
+    text = clean_html(html)
+
+    tokens_raw = re.findall(r'\b[а-яё]+\b', text.lower())
+
+    page_tokens = {t for t in tokens_raw
+                   if t not in STOP_WORDS and len(t) >= 3}
+
+    sorted_page_tokens = sorted(page_tokens)
+
+    with open(f"{TOKENS_DIR}/{page_id}_tokens.txt", 'w', encoding='utf-8') as f:
+        f.write('\n'.join(sorted_page_tokens) + '\n')
 
 
-tokens_raw = re.findall(r'\b[а-яёa-z]{2,}\b', all_text.lower())
-
-# Фильтрация
-tokens = set()
-for t in tokens_raw:
-    if re.search(r'[0-9]', t): continue
-    if t in STOP_WORDS: continue
-    if len(t) <= 2: continue
-    # Фильтр на подозрительные обрезки
-    if len(t) < 6 and t.lower().endswith(('ou', 'u', 'i', 'y', 'liou', 'new', 'sale', 'di', 'ne', 'lu', 'ti')):
-        continue
-    tokens.add(t)
+    page_lemma_groups = defaultdict(list)
+    for token in sorted_page_tokens:
+        lemma = morph.parse(token)[0].normal_form
+        page_lemma_groups[lemma].append(token)
+        global_lemma_groups[lemma].add(token)
+        all_tokens.add(token)
 
 
-sorted_tokens = sorted(tokens)
+    with open(f"{LEMMAS_DIR}/{page_id}_lemmas.txt", 'w', encoding='utf-8') as f:
+        for lemma in sorted(page_lemma_groups):
+            toks = sorted(set(page_lemma_groups[lemma]))
+            f.write(f"{lemma} {' '.join(toks)}\n")
 
+    print(f"✓ Страница {page_id} — {len(page_tokens)} токенов")
+
+
+# tokens.txt
 with open('tokens.txt', 'w', encoding='utf-8') as f:
-    f.write('\n'.join(sorted_tokens) + '\n')
+    f.write('\n'.join(sorted(all_tokens)) + '\n')
 
-print(f"Уникальных токенов: {len(sorted_tokens)}")
-
-
-lemma_groups = defaultdict(list)
-
-for tok in sorted_tokens:
-    if any(c.isascii() and c.isalpha() for c in tok):
-        lemma = tok
-        if lemma.endswith('ies'):
-            lemma = lemma[:-3] + 'y'
-        elif lemma.endswith('es'):
-            lemma = lemma[:-2]
-        elif lemma.endswith('s'):
-            lemma = lemma[:-1]
-        elif lemma.endswith('ed'):
-            lemma = lemma[:-2] if len(lemma) > 2 and lemma[-3] != 'e' else lemma[:-1]
-        elif lemma.endswith('ing'):
-            lemma = lemma[:-3] if len(lemma) > 3 and lemma[-4] != 'e' else lemma[:-4]
-    else:
-        lemma = simple_russian_stem(tok)
-    lemma_groups[lemma].append(tok)
-
-
-lemma_lines = []
-for lemma in sorted(lemma_groups):
-    group = sorted(set(lemma_groups[lemma]))
-    if len(lemma) <= 2 or (len(group) == 1 and lemma == group[0]):
-        continue
-    line = lemma + ' ' + ' '.join(group)
-    lemma_lines.append(line)
-
+# lemmas.txt
 with open('lemmas.txt', 'w', encoding='utf-8') as f:
-    f.write('\n'.join(lemma_lines) + '\n')
+    for lemma in sorted(global_lemma_groups):
+        toks = sorted(global_lemma_groups[lemma])
+        f.write(f"{lemma} {' '.join(toks)}\n")
 
-print(f"Групп лемм после фильтра: {len(lemma_lines)}")
+
+print(f"Уникальных токенов всего: {len(all_tokens)}")
+print(f"Групп лемм всего: {len(global_lemma_groups)}")
