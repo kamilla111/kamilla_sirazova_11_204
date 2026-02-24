@@ -33,7 +33,7 @@ python process.py
 ```
 **Шаг 3 — Построение индекса и поиск (задание 3)**
 ```bash
-Bashpython search.py
+python search.py
 ```
 После запуска search.py можно вводить поисковые запросы в консоль. 
 
@@ -47,5 +47,6 @@ Bashpython search.py
 - `tokens.txt` — **общий список токенов**
 - `lemmas.txt` — **группировка токенов по леммам**
 - inverted_index.json — инвертированный индекс 
+
 
 
