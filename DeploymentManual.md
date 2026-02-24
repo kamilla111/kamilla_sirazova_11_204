@@ -46,7 +46,8 @@ python search.py
 - `index.txt` — соответствие номера страницы и URL
 - `tokens.txt` — **общий список токенов**
 - `lemmas.txt` — **группировка токенов по леммам**
-- inverted_index.json — инвертированный индекс 
+- `inverted_index.json` — инвертированный индекс 
+
 
 
 
