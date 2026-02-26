@@ -44,9 +44,13 @@
 ### Задание 4 — TF-IDF
 
 Для каждого из 128 документов подсчитаны TF, IDF и TF-IDF
+
 Отдельно для терминов и для лемматизированных форм
+
 Создано 256 файлов:
+
 – tfidf_terms/1_terms.txt … tfidf_terms/128_terms.txt
+
 – tfidf_lemmas/1_lemmas.txt … tfidf_lemmas/128_lemmas.txt
 
 
