@@ -45,7 +45,11 @@ python tfidf.py
 - `index.txt` — соответствие номера страницы и URL
 - `tokens.txt` — **общий список токенов**
 - `lemmas.txt` — **группировка токенов по леммам**
-- `inverted_index.json` — инвертированный индекс 
+- `inverted_index.json` — инвертированный индекс
+- `tfidf_terms/` — TF-IDF по терминам 
+- `tfidf_lemmas/` — TF-IDF по леммам
+- `tfidf.py` — расчёт TF-IDF (Задание 4)
+
 
 
 
