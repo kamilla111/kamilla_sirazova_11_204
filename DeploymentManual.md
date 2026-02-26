@@ -35,6 +35,10 @@ python search.py
 ```bash
 python tfidf.py
 ```
+**Шаг 4 — Векторный поиск**
+```bash
+python vector_search.py
+```
 
 # Результат выполнения
 После выполнения скриптов в проекте будут созданы:
@@ -49,6 +53,7 @@ python tfidf.py
 - `tfidf_terms/` — TF-IDF по терминам 
 - `tfidf_lemmas/` — TF-IDF по леммам
 - `tfidf.py` — расчёт TF-IDF (Задание 4)
+
 
 
 
