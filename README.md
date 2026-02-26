@@ -19,6 +19,7 @@
 - `tfidf_terms/` — TF-IDF по терминам 
 - `tfidf_lemmas/` — TF-IDF по леммам
 - `tfidf.py` — расчёт TF-IDF (Задание 4)
+- `vector_search.py` - Векторный поиск
 
 ## Выполненные задания
 
@@ -52,5 +53,13 @@
 – tfidf_terms/1_terms.txt … tfidf_terms/128_terms.txt
 
 – tfidf_lemmas/1_lemmas.txt … tfidf_lemmas/128_lemmas.txt
+
+### Задание 5 — Векторный поиск (Vector Space Model)
+
+- Реализован поиск по TF-IDF леммам
+- Используется косинусное сходство
+- Ранжирование результатов по релевантности
+- Интерактивный режим (как в булевом поиске)
+- Скрипт: `vector_search.py`
 
 
